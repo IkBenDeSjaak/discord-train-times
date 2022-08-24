@@ -60,7 +60,7 @@ async function fetchDepartures(stationCode) {
   const res = await fetch(url, {
     headers: {
       'Host': 'gateway.apiportal.ns.nl',
-      'Ocp-Apim-Subscription-Key': '04f898885e074855b13d732e47683d3d',
+      'Ocp-Apim-Subscription-Key': process.env.NS_KEY,
       'Content-Type': 'application/json',
     }
   });
