@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import fetch from 'node-fetch';
 import { verifyKey } from 'discord-interactions';
+import format from 'date-fns-tz/format';
 
 export function VerifyDiscordRequest(clientKey) {
   return function (req, res, buf, encoding) {
@@ -41,10 +42,49 @@ export async function DiscordRequest(endpoint, options) {
 
 // Simple method that returns a random emoji from list
 export function getRandomEmoji() {
-  const emojiList = ['😭','😄','😌','🤓','😎','😤','🤖','😶‍🌫️','🌏','📸','💿','👋','🌊','✨'];
+  const emojiList = ['😭', '😄', '😌', '🤓', '😎', '😤', '🤖', '😶‍🌫️', '🌏', '📸', '💿', '👋', '🌊', '✨'];
   return emojiList[Math.floor(Math.random() * emojiList.length)];
 }
 
-export function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+export async function getDeparturesFromStationToStation(fromStation, toStation) {
+  const allDeparturesFromStation = await fetchDepartures(fromStation);
+
+  const departuresFromStationToStation = allDeparturesFromStation[toStation]
+
+  return departuresFromStationToStation
+}
+
+async function fetchDepartures(stationCode) {
+  const url = `https://gateway.apiportal.ns.nl/reisinformatie-api/api/v2/departures?station=` + stationCode;
+
+  const res = await fetch(url, {
+    headers: {
+      'Host': 'gateway.apiportal.ns.nl',
+      'Ocp-Apim-Subscription-Key': '04f898885e074855b13d732e47683d3d',
+      'Content-Type': 'application/json',
+    }
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+
+    const departures = {}
+
+    for (const departure of data.payload.departures) {
+      if (departures[departure.direction] === undefined) {
+        departures[departure.direction] = []
+      }
+
+      departures[departure.direction].push(convertDateToTimeString(departure.plannedDateTime))
+    }
+
+    return departures;
+  }
+}
+
+const convertDateToTimeString = (date) => {
+  const dateObject = new Date(date);
+  //dateObject.setTime(dateObject.getTime() + (2 * 60 * 60 * 1000))
+
+  return format(dateObject, 'HH:mm')
 }
